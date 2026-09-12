@@ -571,3 +571,140 @@ This project demonstrates understanding of:
 ParkWise is an educational project and is not an official National Park Service application.
 
 Park rules and conditions may change. Visitors should confirm current regulations and conditions using official park resources before making travel or safety decisions.
+
+---
+
+# 🤖 Agentic RAG Upgrade
+
+ParkWise now supports an **Agentic RAG** workflow. Unlike the original fixed RAG pipeline, the system can decide how to retrieve evidence, evaluate whether that evidence is sufficient, and perform another retrieval attempt with a rewritten query before answering.
+
+## Agent Workflow
+
+```text
+User Question
+      ↓
+Planning Agent
+  ├─ identify intent
+  ├─ rewrite query
+  └─ choose park scope
+      ↓
+Document Retriever
+      ↓
+Evidence Evaluator
+      ↓
+Is the evidence sufficient?
+   ┌───────┴────────┐
+  Yes               No
+   ↓                 ↓
+Answer         Rewrite / Replan
+   ↑                 │
+   └─────────────────┘
+```
+
+The loop is bounded to a maximum of three retrieval attempts so it cannot retry forever.
+
+## What Makes This Agentic?
+
+The upgraded system adds four decision-making stages:
+
+1. **Planning** – Gemini determines the user's intent, creates a retrieval-optimized query, and selects the relevant park document scope.
+2. **Tool use** – the agent calls the local semantic/hybrid retriever with its selected query and scope.
+3. **Evidence evaluation** – Gemini judges whether the retrieved chunks actually contain enough information to answer the original question.
+4. **Self-correction** – if the evidence is weak, the agent generates a better query and searches again before producing the final grounded answer.
+
+The Streamlit interface includes an optional **Agent Decision Trace** that displays these explicit workflow decisions for demonstration and debugging.
+
+## New File
+
+```text
+src/agentic_rag.py
+```
+
+This file contains the orchestration logic for:
+
+```text
+Plan → Retrieve → Evaluate → Retry → Generate
+```
+
+## Retriever Improvements
+
+`src/retriever.py` was also upgraded so the agent can control retrieval directly. It now supports:
+
+- one or multiple park filters
+- agent-provided park scope
+- broader topic-aware query expansion
+- lightweight lexical boosting alongside semantic similarity
+- cross-park comparison queries
+
+## Running ParkWise Agentic RAG
+
+Create a `.env` file in the project root:
+
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+Install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the app:
+
+```bash
+streamlit run app.py
+```
+
+Turn on **Show Agent Reasoning Trace** in the sidebar to demonstrate the agent workflow.
+
+## Example Demonstration
+
+Try a question such as:
+
+```text
+Can I bring my dog to Redwood National Park?
+```
+
+The system can perform:
+
+```text
+1. Plan
+   Intent → pet rules
+   Scope → redwood.pdf
+
+2. Retrieve
+   Search document chunks for pet restrictions
+
+3. Evaluate
+   Determine whether retrieved passages answer the question
+
+4. Replan (if necessary)
+   Rewrite search using terms such as dogs, leash, prohibited, trails
+
+5. Retrieve Again
+
+6. Generate
+   Answer only from the accumulated document evidence
+```
+
+A comparison question such as:
+
+```text
+Compare hiking information for Redwood and Rocky Mountain National Park.
+```
+
+can select multiple park document collections instead of forcing retrieval into only one park.
+
+## Traditional RAG vs ParkWise Agentic RAG
+
+| Traditional ParkWise RAG | ParkWise Agentic RAG |
+|---|---|
+| One fixed search | Agent chooses search strategy |
+| Original query | Agent can rewrite query |
+| Mostly single-park keyword detection | Agent-controlled single/multi-park scope |
+| Top chunks sent directly to LLM | Evidence is evaluated first |
+| No recovery from weak retrieval | Replans and retrieves again |
+| Fixed pipeline | Bounded decision loop |
+
+This architecture keeps the project understandable for a student portfolio while demonstrating key Agentic RAG concepts without hiding the implementation behind a large agent framework.
