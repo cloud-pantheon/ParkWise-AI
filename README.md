@@ -9,11 +9,10 @@ The application is built with **Python, Streamlit, Gemini, Sentence Transformers
 ---
 
 ## 🚀 Live Demo
-
-parkwise.up.railway.app
+The app is deployed on Railway:
 
 ```text
-https://your-app-link.streamlit.app
+https://parkwise.up.railway.app
 ```
 
 ---
