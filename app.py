@@ -73,6 +73,8 @@ def render_sources(sources):
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
+st.write("API key detected:", bool(api_key))
+
 if not api_key:
     st.error("Gemini API key was not found in the environment variables.")
     st.stop()
