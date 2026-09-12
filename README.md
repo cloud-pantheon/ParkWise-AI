@@ -10,7 +10,7 @@ The application is built with **Python, Streamlit, Gemini, Sentence Transformers
 
 ## 🚀 Live Demo
 
-Add your deployed Streamlit/Railway link here:
+parkwise.up.railway.app
 
 ```text
 https://your-app-link.streamlit.app
